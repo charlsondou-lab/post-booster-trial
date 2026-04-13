@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Post Booster Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- Ambient Glow Effects -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+
+    <main class="shell">
+      <header class="masthead">
+        <div class="brand-lockup">
+          <img
+            class="brand-mark"
+            src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg"
+            alt=""
+          />
+          <div>
+            <p class="eyebrow" data-i18n="header_eyebrow">Realtime Operations</p>
+            <h1>Post Booster</h1>
+            <p class="lede" data-i18n="header_lede">Telegram 監聽中，收到 Threads 連結後自動讀取最新 session 並產生回覆。</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="lang-btn" type="button" class="secondary-btn">EN / 繁中</button>
+          <button id="refresh-btn" type="button" data-i18n="refresh_btn">重新整理</button>
+        </div>
+      </header>
+
+      <section class="status-panel" aria-label="Telegram status">
+        <div class="status-tile">
+          <span data-i18n="stat_bot">Bot</span>
+          <strong id="enabled" class="pill">-</strong>
+        </div>
+        <div class="status-tile">
+          <span data-i18n="stat_connection">連線</span>
+          <strong id="connected" class="pill">-</strong>
+        </div>
+        <div class="status-tile">
+          <span data-i18n="stat_listening">監聽</span>
+          <strong id="listening" class="pill">-</strong>
+        </div>
+        <!-- Polling Hidden -->
+        <div class="status-tile stat">
+          <span data-i18n="stat_processed">今日處理</span>
+          <strong id="processedCount">-</strong>
+        </div>
+        <div class="status-tile stat">
+          <span data-i18n="stat_update_id">Update ID</span>
+          <strong id="lastUpdateId">-</strong>
+        </div>
+      </section>
+
+      <section class="detail-strip">
+        <div>
+          <span data-i18n="detail_last_checked">最後檢查</span>
+          <strong id="lastChecked">-</strong>
+        </div>
+        <div>
+          <span data-i18n="detail_last_error">最近錯誤</span>
+          <strong id="lastError">-</strong>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow" data-i18n="today_eyebrow">Today</p>
+            <h2 data-i18n="today_title">今天已回覆任務</h2>
+          </div>
+          <span id="today-meta" class="section-meta">-</span>
+        </div>
+
+        <div id="today-list" class="task-list"></div>
+        <div id="today-empty" class="empty-state" data-i18n="today_empty">今天尚未有成功回覆紀錄</div>
+
+        <template id="task-item-template">
+          <article class="task-row">
+            <div class="task-meta">
+              <time class="task-time"></time>
+              <a class="task-link" target="_blank" rel="noreferrer"></a>
+            </div>
+            <div class="task-copy">
+              <div>
+                <span data-i18n="task_post">貼文</span>
+                <p class="task-post"></p>
+              </div>
+              <div>
+                <span data-i18n="task_reply">回覆</span>
+                <p class="task-reply"></p>
+              </div>
+            </div>
+          </article>
+        </template>
+      </section>
+
+      <section class="section-block">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow" data-i18n="recent_eyebrow">Recent</p>
+            <h2 data-i18n="recent_title">最近紀錄</h2>
+          </div>
+          <span class="section-meta" data-i18n="recent_meta">最多 200 筆</span>
+        </div>
+        <div id="recent-list" class="recent-list"></div>
+      </section>
+    </main>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
