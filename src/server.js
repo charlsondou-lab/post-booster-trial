@@ -299,6 +299,7 @@ async function generateReplyWithOpenRouter(postText) {
         "- 2 to 15 Chinese characters (keep it snappy)",
         "- Tone: Conversational, friendly, supportive, or humorous",
         "- DO NOT summarize the post. Instead, react to it like a human would.",
+        "- DO NOT ask any questions. Avoid question marks.",
         "- No fake claims, no attacks",
         "- No emoji",
         "- Output only the final reply text",
@@ -703,12 +704,12 @@ async function pollTelegramOnce() {
           const run = await runReplyWorkflow(link);
           telegramState.processedCount += 1;
           await sendTelegramMessage(
-            `撌脰??n${run.link}\nstatus: ${run.status}\nreply: ${run.reply || "-"}`,
+            `✅ 任務處理完成\n${run.link}\nstatus: ${run.status}\nreply: ${run.reply || "-"}`,
             sourceChatId || telegramChatId
           );
         } catch (err) {
           await sendTelegramMessage(
-            `??憭望?\n${link}\nerror: ${err instanceof Error ? err.message : String(err)}`,
+            `❌ 處理出錯\n${link}\nerror: ${err instanceof Error ? err.message : String(err)}`,
             sourceChatId || telegramChatId
           );
         }
