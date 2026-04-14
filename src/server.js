@@ -1,4 +1,4 @@
-﻿import "dotenv/config";
+import "dotenv/config";
 import express from "express";
 import { chromium } from "playwright";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -287,16 +287,18 @@ async function generateReplyWithOpenRouter(postText) {
     {
       role: "system",
       content:
-        "You are a social media assistant. Always output only Traditional Chinese text. Never output Simplified Chinese. Never use emoji."
+        "You are a social media assistant representing a person from Taiwan or Hong Kong. Always output natural, conversational Traditional Chinese (Taiwan/HK). Never output Simplified Chinese. Never use emoji. Avoid formal or robotic summaries."
     },
     {
       role: "user",
       content: [
-        "Write exactly one short reply for this Threads post.",
+        "Write exactly one short, natural reply for this Threads post as if you are a real user.",
         "Rules:",
-        "- Traditional Chinese only",
-        "- 2 to 10 Chinese characters",
-        "- Help boost engagement",
+        "- Traditional Chinese (Taiwan/Hong Kong) only",
+        "- Use Taiwan/HK terminology (e.g., '品質' instead of '質量', '貼文' instead of '帖子')",
+        "- 2 to 15 Chinese characters (keep it snappy)",
+        "- Tone: Conversational, friendly, supportive, or humorous",
+        "- DO NOT summarize the post. Instead, react to it like a human would.",
         "- No fake claims, no attacks",
         "- No emoji",
         "- Output only the final reply text",
@@ -310,7 +312,7 @@ async function generateReplyWithOpenRouter(postText) {
   if (!reply) throw new Error("OpenRouter returned empty reply.");
 
   const stripEmoji = (text) => text.replace(/\p{Extended_Pictographic}/gu, "").trim();
-  const hasLikelySimplified = (text) => /[这们后发台网为于与个来会点里国说实应开关见没]/.test(text);
+  const hasLikelySimplified = (text) => /[这们后发台网为于与个来会点里国说实应开关见没质采务继术级确议适]/.test(text);
 
   let finalReply = stripEmoji(reply);
   if (hasLikelySimplified(finalReply)) {
@@ -318,7 +320,7 @@ async function generateReplyWithOpenRouter(postText) {
       {
         role: "system",
         content:
-          "Convert input to Traditional Chinese only, remove all emoji, keep it concise, output only final text."
+          "Convert input to Traditional Chinese only (Taiwan/HK style), remove all emoji, keep it concise, output only final text."
       },
       { role: "user", content: finalReply }
     ]);
@@ -329,7 +331,7 @@ async function generateReplyWithOpenRouter(postText) {
     const fallback = await callOpenRouter([
       {
         role: "system",
-        content: "Output Traditional Chinese only, 2-10 Chinese characters, no emoji."
+        content: "Output Traditional Chinese (Taiwan/HK) only, 2-15 Chinese characters, no emoji."
       },
       { role: "user", content: `Post content:\n${postText}` }
     ]);
@@ -424,7 +426,7 @@ async function clickActionButton(page, action) {
 }
 
 async function fillReplyEditor(page, text) {
-  return page.evaluate((value) => {
+  const success = await page.evaluate(() => {
     const isVisible = (el) => {
       if (!el) return false;
       const style = window.getComputedStyle(el);
@@ -443,29 +445,25 @@ async function fillReplyEditor(page, text) {
     target.focus();
 
     if (target.tagName === "TEXTAREA" || target.tagName === "INPUT") {
-      target.value = value;
-      target.dispatchEvent(new Event("input", { bubbles: true }));
-      target.dispatchEvent(new Event("change", { bubbles: true }));
-      return true;
-    }
-
-    const paragraph = target.querySelector("p");
-    if (paragraph) {
-      paragraph.textContent = "";
-      paragraph.appendChild(document.createTextNode(value));
+      target.value = "";
     } else {
-      target.textContent = value;
+      const paragraph = target.querySelector("p");
+      if (paragraph) {
+        paragraph.textContent = "";
+      } else {
+        target.textContent = "";
+      }
     }
-
-    target.dispatchEvent(
-      new InputEvent("input", {
-        bubbles: true,
-        inputType: "insertText",
-        data: value
-      })
-    );
     return true;
-  }, text);
+  });
+
+  if (!success) return false;
+
+  // Real human-like typing simulation
+  for (const char of text) {
+    await page.keyboard.type(char, { delay: Math.floor(Math.random() * 150) + 50 });
+  }
+  return true;
 }
 
 async function clickSubmitNearEditor(page) {
@@ -511,17 +509,19 @@ async function publishAndLike(page, replyText, doLike) {
   if (doLike) {
     result.liked = await clickActionButton(page, "like");
     log("Like result", result.liked);
+    await page.waitForTimeout(Math.floor(Math.random() * 1000) + 500);
   } else {
     result.likeSkipped = true;
   }
 
+  await page.waitForTimeout(Math.floor(Math.random() * 2000) + 1000); // Random delay before reply
   result.replyOpened = await clickActionButton(page, "reply");
   log("Reply open result", result.replyOpened);
-  if (result.replyOpened) await page.waitForTimeout(700);
+  if (result.replyOpened) await page.waitForTimeout(Math.floor(Math.random() * 1000) + 800);
 
   result.replyFilled = await fillReplyEditor(page, replyText);
   log("Reply fill result", result.replyFilled);
-  if (result.replyFilled) await page.waitForTimeout(300);
+  if (result.replyFilled) await page.waitForTimeout(Math.floor(Math.random() * 1500) + 1000); // Random delay after typing
 
   result.replySent = await clickSubmitNearEditor(page);
   if (!result.replySent) result.replySent = await clickActionButton(page, "submit");
@@ -569,7 +569,7 @@ async function runReplyWorkflow(link, override = {}) {
     const session = fetchThreadsSessionFromEnv();
 
     log("Start workflow", { link: normalizedUrl, headless, publish, do_like });
-    browser = await chromium.launch({ headless, slowMo: headless ? 0 : 90 });
+    browser = await chromium.launch({ headless, slowMo: headless ? 0 : 400 });
     const context = await browser.newContext({
       userAgent:
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -790,4 +790,3 @@ process.on("SIGINT", () => {
   if (telegramPollingTimer) clearInterval(telegramPollingTimer);
   server.close(() => process.exit(0));
 });
-
